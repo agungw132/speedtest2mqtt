@@ -9,6 +9,7 @@ MQTT_CLIENTID=${MQTT_CLIENTID:-DefaultSpeedtest2MqttClientID}
 MQTT_BROKER=${MQTT_BROKER:-test.mosquitto.org}
 MQTT_USERNAME=${MQTT_USERNAME}
 MQTT_PASSWORD=${MQTT_PASSWORD}
+MQTT_PORT=${MQTT_PORT:-1883}
 
 if [[ $SPEEDTEST_SERVER != "" ]]; then
     SPEEDTEST_SERVER="--server $SPEEDTEST_SERVER"
@@ -23,7 +24,7 @@ if [[ $MQTT_PASSWORD != "" ]]; then
 fi
 
 MOSQUITTO_PUB=$(which mosquitto_pub)
-MOSQUITTO_PUB_CMD="$MOSQUITTO_PUB -h '$MQTT_BROKER' $MQTT_USERNAME $MQTT_PASSWORD -r"
+MOSQUITTO_PUB_CMD="$MOSQUITTO_PUB -h '$MQTT_BROKER' -p $MQTT_PORT $MQTT_USERNAME $MQTT_PASSWORD -r"
 
 if [[ "$MQTT_DISCOVERY" == "true" ]]; then
     echo "Publishing discovery"
@@ -42,9 +43,7 @@ while true; do
 
     echo "Publishing stats..."
     echo -e "Ping: $ping ms\nDownload: $download Mbps\nUpload: $upload Mbps"
-    eval "$MOSQUITTO_PUB_CMD -t '$MQTT_TOPICPREFIX/download/state' -m '$download'"
-    eval "$MOSQUITTO_PUB_CMD -t '$MQTT_TOPICPREFIX/upload/state' -m '$upload'"
-    eval "$MOSQUITTO_PUB_CMD -t '$MQTT_TOPICPREFIX/ping/state' -m '$ping'"
+    eval "$MOSQUITTO_PUB_CMD -t '$MQTT_TOPICPREFIX' -m '{\"ping\": $ping, \"download\": $download, \"upload\": $upload}'"
 
     echo "Sleeping for $SPEEDTEST_LOOKUPINTERVAL seconds"
     sleep $SPEEDTEST_LOOKUPINTERVAL
